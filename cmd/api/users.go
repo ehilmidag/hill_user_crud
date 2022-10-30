@@ -16,7 +16,7 @@ func (app *application) getUserByIdHandler(w http.ResponseWriter, r *http.Reques
 	id, err := app.readIDFromParameter(r)
 
 	if err != nil {
-		http.NotFound(w, r)
+		app.badRequestResponse(w, r)
 		return
 	}
 	user := data.User{
@@ -24,11 +24,10 @@ func (app *application) getUserByIdHandler(w http.ResponseWriter, r *http.Reques
 		Name:  "Test",
 		Email: "ehdag@gmail.com",
 	}
-	err = app.writeJsonHelper(w, http.StatusOK, user, nil)
+	err = app.writeJsonHelper(w, http.StatusOK, envelope{"user": user}, nil)
 
 	if err != nil {
-		app.logger.Println(err)
-		http.Error(w, "the server bla bla", http.StatusInternalServerError)
+		app.serverErrorResponse(w, r, err)
 	}
 }
 

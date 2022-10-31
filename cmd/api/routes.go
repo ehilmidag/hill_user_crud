@@ -9,8 +9,6 @@ import (
 func (app *application) router() *httprouter.Router {
 	router := httprouter.New()
 
-	router.NotFound = http.HandlerFunc(app.badRequestResponse)
-
 	router.HandlerFunc(http.MethodGet, "/healthcheck", app.healthCheckHandler)
 	router.HandlerFunc(http.MethodPut, "/users", app.addUserHandler)
 	router.HandlerFunc(http.MethodPatch, "/users", app.editUserHandler)

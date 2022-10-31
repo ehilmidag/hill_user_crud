@@ -46,3 +46,13 @@ func (app *application) writeJsonHelper(w http.ResponseWriter, status int, data 
 
 	return nil
 }
+
+func (app *application) readJsonHelpler(w http.ResponseWriter, r *http.Request, data interface{}) error {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	err := decoder.Decode(data)
+	if err != nil {
+		return errors.New("Bad request")
+	}
+	return err
+}

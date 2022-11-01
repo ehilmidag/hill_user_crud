@@ -9,8 +9,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-//data user altında derli toplu görünsün diye envelope aldım
-type envelope map[string]interface{}
+// data user altında derli toplu görünsün diye envelope aldım
+type envelope interface{}
 
 // sık kullanılacağı için bir fonksiyona almakta fayda var dedim
 // normalde yorum satırına ihtiyaç olan kod kötü koddur dense de o an ne düşündüğümü anlatmak adına ufak ufak notlar bırakıcam

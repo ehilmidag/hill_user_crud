@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"hilmi.dag/internal/data"
 	"log"
 	"net/http"
 	"os"
@@ -27,6 +28,7 @@ type config struct {
 type application struct {
 	config config
 	logger *log.Logger
+	models data.Models
 }
 
 func main() {
@@ -34,7 +36,7 @@ func main() {
 
 	flag.IntVar(&conf.port, "port", 8080, "REST API SERVER PORT")
 	//test case olduğu için credentialleri env ye almadım
-	flag.StringVar(&conf.db.dsn, "db-dsn", "postgres://postgres:1234@localhost/users?sslmode=disable", "PostgreSQL DNS")
+	flag.StringVar(&conf.db.dsn, "db-dsn", "localhost://postgres@localhost/User?sslmode=disable", "PostgreSQL DNS")
 
 	// çok işlem olmadığı için openconsu manuel verip biraz  performans kasalım:D
 	flag.IntVar(&conf.db.maxOpenConns, "db-max-open-conns", 10, "PostgreSQL max open connections number")
@@ -56,6 +58,7 @@ func main() {
 	app := &application{
 		config: conf,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	server := &http.Server{

@@ -1,0 +1,20 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: hill-user-crud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hill-user-crud
+  template:
+    metadata:
+      labels:
+        app: hill-user-crud
+    spec:
+      containers:
+        - name: hill-user-crud
+          image: golang:1.17
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080

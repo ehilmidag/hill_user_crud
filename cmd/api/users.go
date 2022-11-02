@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"hilmi.dag/internal/data"
 	"hilmi.dag/internal/validator"
-	"net/http"
 )
 
 func (app *application) addUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,9 +68,12 @@ func (app *application) getUserByIdHandler(w http.ResponseWriter, r *http.Reques
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
 			app.notFoundResponse(w, r)
+
 		default:
 			app.serverErrorResponse(w, r, err)
+
 		}
+		return
 	}
 	userResponse := data.UserDTO{
 		ID:    user.ID,
@@ -89,43 +94,49 @@ func (app *application) editUserHandler(w http.ResponseWriter, r *http.Request) 
 		app.badRequestResponse(w, r)
 		return
 	}
-	var input struct {
-		Name     string `json:"name"`
-		Password string `json:"password"`
+	user, err := app.models.Users.GetUserByID(id)
+	fmt.Println(user)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			app.notFoundResponse(w, r)
+
+		default:
+			app.serverErrorResponse(w, r, err)
+
+		}
+		return
 	}
 
+	var input struct {
+		Name     *string `json:"name"`
+		Password *string `json:"password"`
+	}
 	err = app.readJsonHelpler(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r)
 		return
 	}
-	user := &data.UserEntity{
-		ID:       id,
-		Name:     input.Name,
-		Password: input.Password,
+	if input.Name != nil {
+		user.Name = *input.Name
 	}
-	v := validator.New()
 
-	modelfromdb, err := app.models.Users.UpdateUser(user)
+	if input.Password != nil {
+		user.Password = *input.Password
+	}
 
+	if input.Password != nil || input.Name != nil {
+		user.UpdatedAt = time.Now()
+	}
+	fmt.Println(&user)
+	updatedUser, err := app.models.Users.UpdateUser(user)
 	if err != nil {
-		switch {
-		case errors.Is(err, data.ErrDuplicateEmail):
-			v.AddErrorToMap("email", "UserEntity with that email already exists")
-			app.alreadyExistResponse(w, r)
-		default:
-			app.serverErrorResponse(w, r, err)
-		}
+		app.serverErrorResponse(w, r, err)
 		return
 	}
-	userResponse := data.UserDTO{
-		ID:    modelfromdb.ID,
-		Name:  modelfromdb.Name,
-		Email: modelfromdb.Email,
-	}
+	response := updatedUser.ConvertEntitytoDTO()
 
-	err = app.writeJsonHelper(w, http.StatusOK, userResponse, nil)
-
+	err = app.writeJsonHelper(w, http.StatusOK, response, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
@@ -142,9 +153,13 @@ func (app *application) deleteUserByIdHandler(w http.ResponseWriter, r *http.Req
 
 	if err != nil {
 		if err == data.ErrRecordNotFound {
-			app.alreadyExistResponse(w, r)
+			app.notFoundResponse(w, r)
+			return
+		} else {
+			app.serverErrorResponse(w, r, err)
+			return
 		}
-		app.serverErrorResponse(w, r, err)
+
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -152,5 +167,20 @@ func (app *application) deleteUserByIdHandler(w http.ResponseWriter, r *http.Req
 }
 
 func (app *application) getAllUsersHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "sa gardaş")
+
+	users, err := app.models.Users.GetAllUsers()
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+	}
+	usersResponse := data.ConvertEntityListtoDTO(users)
+	err = app.writeJsonHelper(w, http.StatusOK, usersResponse, nil)
+
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }

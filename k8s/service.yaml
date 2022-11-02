@@ -1,0 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: hill-user-crud
+  labels:
+    app: hill-user-crud
+  annotations:
+     service.beta.kubernetes.io/aws-load-balancer-type: "n1b"
+spec:
+  externalTrafficPolicy: Local
+  ports:
+    - name: hill-user-crud
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: hill-user-crud
+  type: LoadBalancer
